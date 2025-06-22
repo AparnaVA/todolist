@@ -1,10 +1,12 @@
 const TASKS_PER_PAGE = 4;
-let tasks = [];
+let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 let currentPage = 1;
 
 function renderTasks() {
   const todoList = document.getElementById('todo-list');
   todoList.innerHTML = '';
+
+  tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
   const start = (currentPage - 1) * TASKS_PER_PAGE;
   const end = start + TASKS_PER_PAGE;
@@ -18,7 +20,44 @@ function renderTasks() {
     span.className = 'todo-text';
     span.textContent = task.text;
 
+    // Due date display
+const due = document.createElement('span');
+due.textContent = `Due: ${task.dueDate}`;
+due.style.marginLeft = "1.2rem";
+due.style.fontSize = "1rem";
+due.style.fontFamily = "Poppins, Arial, sans-serif";
+due.style.padding = "2px 10px";
+due.style.borderRadius = "8px";
+due.style.fontWeight = "bold";
+due.style.letterSpacing = "1px";
+due.style.color = "#fff";
+
+// Color logic
+const today = new Date();
+const dueDateObj = new Date(task.dueDate);
+const diffDays = Math.ceil((dueDateObj - today) / (1000 * 60 * 60 * 24));
+
+if (diffDays < 0) {
+  // Overdue
+  due.style.background = "#ef4444"; // Red
+} else if (diffDays === 0) {
+  // Due today
+  due.style.background = "#f59e42"; // Orange
+} else if (diffDays <= 3) {
+  // Due soon (within 3 days)
+  due.style.background = "#fbbf24"; // Yellow
+  due.style.color = "#4b006e";
+} else if (diffDays <= 7) {
+  // Moderate (within a week)
+  due.style.background = "#38bdf8"; // Blue
+} else {
+  // Not urgent
+  due.style.background = "#7c3aed"; // Violet
+}
+
+
     li.appendChild(span);
+    li.appendChild(due);
 
     const actions = document.createElement('div');
     actions.className = 'todo-actions';
@@ -30,6 +69,7 @@ function renderTasks() {
     completeBtn.innerHTML = '✔';
     completeBtn.onclick = function () {
       task.completed = !task.completed;
+      saveTasks();
       renderTasks();
     };
     actions.appendChild(completeBtn);
@@ -61,32 +101,38 @@ function renderTasks() {
         li.replaceChild(span, li.querySelector('input'));
         span.textContent = task.text;
         editBtn.innerHTML = '✎';
+        saveTasks();
       }
     };
     actions.appendChild(editBtn);
 
     // Delete button
     const deleteBtn = document.createElement('button');
-deleteBtn.className = 'action-btn delete';
-deleteBtn.title = 'Delete Task';
-deleteBtn.innerHTML = '🗑';
-deleteBtn.onclick = function () {
-  showCustomConfirm(() => {
-    const globalIdx = start + idx;
-    tasks.splice(globalIdx, 1);
-    if (currentPage > 1 && start >= tasks.length) {
-      currentPage--;
-    }
-    renderTasks();
-  });
-};
-actions.appendChild(deleteBtn);
+    deleteBtn.className = 'action-btn delete';
+    deleteBtn.title = 'Delete Task';
+    deleteBtn.innerHTML = '🗑';
+    deleteBtn.onclick = function () {
+      showCustomConfirm(() => {
+        const globalIdx = start + idx;
+        tasks.splice(globalIdx, 1);
+        if (currentPage > 1 && start >= tasks.length) {
+          currentPage--;
+        }
+        saveTasks();
+        renderTasks();
+      });
+    };
+    actions.appendChild(deleteBtn);
 
     li.appendChild(actions);
     todoList.appendChild(li);
   });
 
   renderPagination();
+}
+
+function saveTasks() {
+  localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
 function showCustomConfirm(onYes) {
@@ -161,11 +207,15 @@ function renderPagination() {
 
 function addTodo() {
   const input = document.getElementById('todo-input');
+  const dateInput = document.getElementById('due-date-input');
   const text = input.value.trim();
-  if (!text) return;
-  tasks.push({ text, completed: false });
+  const dueDate = dateInput.value;
+  if (!text || !dueDate) return;
+  tasks.push({ text, completed: false, dueDate });
   input.value = '';
-  currentPage = Math.ceil(tasks.length / TASKS_PER_PAGE); // Go to last page
+  dateInput.value = '';
+  currentPage = Math.ceil(tasks.length / TASKS_PER_PAGE);
+  saveTasks();
   renderTasks();
 }
 

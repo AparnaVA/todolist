@@ -10,9 +10,10 @@
   <div class="container">
     <h2>📝 To-Do List</h2>
     <div class="input-group">
-      <input id="todo-input" type="text" placeholder="Add a new task..." />
-      <button onclick="addTodo()" id="add-btn">Add</button>
-    </div>
+  <input id="todo-input" type="text" placeholder="Add a new task..." />
+  <input id="due-date-input" type="date" style="font-size:1rem; padding:0.7rem; border-radius:8px; border:1.5px solid #a78bfa;" />
+  <button onclick="addTodo()" id="add-btn">Add</button>
+</div>
     <ul id="todo-list"></ul>
   </div>
   <div id="custom-confirm" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(60,0,100,0.25); z-index:1000; justify-content:center; align-items:center;">
