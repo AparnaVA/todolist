@@ -1,0 +1,29 @@
+
+
+{% block 'content' %}
+    <h2>{% if form.instance.pk %}Edit Todo{% else %}Add Todo{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'todo_list' %}" class="btn btn-secondary">Cancel</a>
+{% if form.instance.pk %}
+        <a href="{% url 'delete_todo' form.instance.pk %}" class="btn btn-danger">Delete</a>
+        {% endif %}
+    </form>
+{% endblock %}
+
+{% block 'sidebar' %}
+    <h3>Todo List</h3>
+    <ul>
+        {% for todo in todos %}
+            <li>
+                <a href="{% url 'edit_todo' todo.pk %}">{{ todo.title }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+
+{% block 'footer' %}
+    <p>&copy; 2023 Todo List Application</p>
+{% endblock %}

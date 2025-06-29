@@ -2,15 +2,29 @@ const TASKS_PER_PAGE = 4;
 let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 let currentPage = 1;
 
+let currentFilter = 'all';
+document.getElementById('filter-tasks').addEventListener('change', function() {
+  currentFilter = this.value;
+  currentPage = 1; // Reset to first page on filter change
+  renderTasks();
+});
+
 function renderTasks() {
   const todoList = document.getElementById('todo-list');
   todoList.innerHTML = '';
 
   tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
+  let filteredTasks = tasks;
+  if (currentFilter === 'pending') {
+    filteredTasks = tasks.filter(task => !task.completed);
+  } else if (currentFilter === 'completed') {
+    filteredTasks = tasks.filter(task => task.completed);
+  }
+
   const start = (currentPage - 1) * TASKS_PER_PAGE;
   const end = start + TASKS_PER_PAGE;
-  const pageTasks = tasks.slice(start, end);
+  const pageTasks = filteredTasks.slice(start, end);
 
   pageTasks.forEach((task, idx) => {
     const li = document.createElement('li');
@@ -39,20 +53,25 @@ const diffDays = Math.ceil((dueDateObj - today) / (1000 * 60 * 60 * 24));
 
 if (diffDays < 0) {
   // Overdue
-  due.style.background = "#ef4444"; // Red
+  due.style.color = "#ef4444"; // Red
+  //make it bold
+  due.style.fontWeight = "bold";
 } else if (diffDays === 0) {
   // Due today
-  due.style.background = "#f59e42"; // Orange
+  due.style.color = "#f59e42"; // Orange
+  due.style.fontWeight = "bold";
 } else if (diffDays <= 3) {
   // Due soon (within 3 days)
-  due.style.background = "#fbbf24"; // Yellow
-  due.style.color = "#4b006e";
+  due.style.color = "#fbbf24"; // Yellow
+  due.style.fontWeight = "bold";
 } else if (diffDays <= 7) {
   // Moderate (within a week)
-  due.style.background = "#38bdf8"; // Blue
+  due.style.color = "#38bdf8"; // Blue
+  due.style.fontWeight = "normal";
 } else {
   // Not urgent
-  due.style.background = "#7c3aed"; // Violet
+  due.style.color = "#7c3aed"; // Violet
+  due.style.fontWeight = "bold";
 }
 
 
@@ -72,6 +91,7 @@ if (diffDays < 0) {
       saveTasks();
       renderTasks();
     };
+    
     actions.appendChild(completeBtn);
 
     // Edit button
@@ -102,9 +122,22 @@ if (diffDays < 0) {
         span.textContent = task.text;
         editBtn.innerHTML = '✎';
         saveTasks();
+        renderTasks();
+        // Show success toast
+        const toast = document.getElementById('liveToast');
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        const toastBody = document.querySelector('.toast-body');
+        toastBody.textContent = 'Task updated successfully!';
+        toastBody.style.fontFamily = 'Poppins, Arial, sans-serif';
+        toastBody.style.fontSize = '1rem';
+        toastBody.style.color = '#fff';
+        toastBody.style.backgroundColor = '#4ade80'; // Green background
       }
     };
+    
     actions.appendChild(editBtn);
+  
 
     // Delete button
     const deleteBtn = document.createElement('button');
@@ -120,6 +153,16 @@ if (diffDays < 0) {
         }
         saveTasks();
         renderTasks();
+           //how to change the text of the toast message
+  const toast = document.getElementById('liveToast');
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+     const toastBody = document.querySelector('.toast-body');
+  toastBody.textContent = 'Task deleted successfully!';
+  toastBody.style.fontFamily = 'Poppins, Arial, sans-serif';
+  toastBody.style.fontSize = '1rem';
+  toastBody.style.color = '#fff';
+  toastBody.style.backgroundColor = '#ef4444'; // Red background
       });
     };
     actions.appendChild(deleteBtn);
@@ -128,7 +171,123 @@ if (diffDays < 0) {
     todoList.appendChild(li);
   });
 
+
+
   renderPagination();
+}
+//add exportTasks('json')
+function exportTasks(format) {
+  if (format === 'json') {
+    const dataStr = JSON.stringify(tasks, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tasks.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+//add exportTasks('csv')
+function exportTasks(format) {
+  if (format === 'csv') {
+    const csvRows = [];
+    csvRows.push(['Task', 'Completed', 'Due Date'].join(','));
+    tasks.forEach(task => {
+      const row = [
+        `"${task.text.replace(/"/g, '""')}"`, // Escape quotes in task text
+        task.completed ? 'Yes' : 'No',
+        task.dueDate
+      ].join(',');
+      csvRows.push(row);
+    });
+    const csvData = csvRows.join('\n');
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tasks.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+//add exportTasks('sql')
+function exportTasks(format) {
+  if (format === 'sql') {
+    const sqlRows = [];
+    sqlRows.push('CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, completed BOOLEAN, due_date TEXT);');
+    tasks.forEach((task, index) => {
+      const completed = task.completed ? 1 : 0;
+      const row = `INSERT INTO tasks (id, text, completed, due_date) VALUES
+(${index + 1}, "${task.text.replace(/"/g, '""')}", ${completed}, "${task.dueDate}");`;
+      sqlRows.push(row);
+    });
+    const sqlData = sqlRows.join('\n');
+    const blob = new Blob([sqlData], { type: 'application/sql' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tasks.sql';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+// add exportTasks('txt')
+function exportTasks(format) {//correct {}
+  if (format === 'txt') {
+    const txtRows = [];
+    tasks.forEach(task => {
+      const completed = task.completed ? '✔' : '✘';
+      txtRows.push(`${completed} ${task.text} (Due: ${task.dueDate})`);
+    });
+    const txtData = txtRows.join('\n');
+    const blob = new Blob([txtData], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tasks.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+// add importTasks()
+function importTasks() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv';
+  input.onchange = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const content = e.target.result;
+      const lines = content.split('\n');
+      lines.forEach(line => {
+        const [text, completed, dueDate] = line.split(',');
+        if (text && dueDate) {
+          tasks.push({
+            text: text.replace(/"/g, ''), // Remove quotes
+            completed: completed.trim() === 'Yes',
+            dueDate: dueDate.trim()
+          });
+        }
+      });
+      saveTasks();
+      renderTasks();
+      // Show success toast
+      const toast = document.getElementById('liveToast');
+      const bsToast = new bootstrap.Toast(toast);
+      const toastBody = document.querySelector('.toast-body');
+      toastBody.textContent = 'Tasks imported successfully!';
+      bsToast.show();
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 function saveTasks() {
@@ -155,7 +314,8 @@ function renderPagination() {
     pagination.style.display = 'flex';
     pagination.style.justifyContent = 'center';
     pagination.style.gap = '10px';
-    pagination.style.marginTop = '16px';
+    pagination.style.marginTop = '40px';
+
     document.querySelector('.container').appendChild(pagination);
   }
   pagination.innerHTML = '';
@@ -205,9 +365,50 @@ function renderPagination() {
   pagination.appendChild(nextBtn);
 }
 
+
 function addTodo() {
   const input = document.getElementById('todo-input');
   const dateInput = document.getElementById('due-date-input');
+  if (!input.value.trim() && !dateInput.value) {
+    //add a bootstrap toast message
+    const toast = document.getElementById('liveToast');
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    //change the text of the toast message
+    const toastBody = document.querySelector('.toast-body');
+    toastBody.textContent = 'Please enter a task and a due date.';
+    toastBody.style.fontFamily = 'Poppins, Arial, sans-serif';
+    toastBody.style.fontSize = '1rem';
+    toastBody.style.color = '#fff';
+    toastBody.style.backgroundColor = '#f87171'; // Red background
+    return;
+  }
+  else if (!dateInput.value) {
+    //add a bootstrap toast message
+    const toast = document.getElementById('liveToast');
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    //change the text of the toast message
+    const toastBody = document.querySelector('.toast-body');
+    toastBody.textContent = 'Please enter a due date.';
+    toastBody.style.fontFamily = 'Poppins, Arial, sans-serif';
+    toastBody.style.fontSize = '1rem';
+    toastBody.style.color = '#fff';
+    toastBody.style.backgroundColor = '#f87171'; // Red background
+    return;
+  }
+  else{
+    const toast = document.getElementById('liveToast');
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+     const toastBody = document.querySelector('.toast-body');
+  toastBody.textContent = 'Task added successfully!';
+  toastBody.style.fontFamily = 'Poppins, Arial, sans-serif';
+  toastBody.style.fontSize = '1rem';
+  toastBody.style.color = '#fff';
+  toastBody.style.backgroundColor = '#4ade80'; // Green background
+  }
+  
   const text = input.value.trim();
   const dueDate = dateInput.value;
   if (!text || !dueDate) return;
@@ -224,3 +425,4 @@ document.getElementById('todo-input').addEventListener('keydown', function(e) {
 });
 
 renderTasks();
+

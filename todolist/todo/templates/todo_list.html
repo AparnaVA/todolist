@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>To-Do List</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #ede9fe; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px #a78bfa33; padding: 2rem; }
+        h2 { color: #7c3aed; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        th, td { padding: 0.7rem; text-align: left; }
+        th { background: #ede9fe; color: #7c3aed; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .actions a, .actions form { display: inline; }
+        .btn { padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 1rem; }
+        .btn-edit { background: #38bdf8; color: #fff; }
+        .btn-delete { background: #ef4444; color: #fff; }
+        .btn-add { background: #7c3aed; color: #fff; margin-bottom: 1rem; display: inline-block; }
+        .completed { text-decoration: line-through; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📝 To-Do List</h2>
+        <a href="{% url 'create_todo' %}" class="btn btn-add">Add Task</a>
+        <table>
+            <tr>
+                <th>Task</th>
+                <th>Due Date</th>
+                <th>Completed</th>
+                <th>Actions</th>
+            </tr>
+            {% for todo in todos %}
+            <tr>
+                <td class="{% if todo.completed %}completed{% endif %}">{{ todo.text }}</td>
+                <td>{{ todo.due_date }}</td>
+                <td>{{ todo.completed|yesno:"✔,✗" }}</td>
+                <td class="actions">
+                    <a href="{% url 'update_todo' todo.id %}" class="btn btn-edit">Edit</a>
+                    <a href="{% url 'delete_todo' todo.id %}" class="btn btn-delete">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align:center;">No tasks yet.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>
