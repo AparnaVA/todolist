@@ -175,11 +175,10 @@ if (diffDays < 0) {
 
   renderPagination();
 }
-//add exportTasks('json')
 function exportTasks(format) {
   if (format === 'json') {
-    const dataStr = JSON.stringify(tasks, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
+    const jsonData = JSON.stringify(tasks, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -187,16 +186,13 @@ function exportTasks(format) {
     a.click();
     URL.revokeObjectURL(url);
   }
-}
 
-//add exportTasks('csv')
-function exportTasks(format) {
-  if (format === 'csv') {
+  else if (format === 'csv') {
     const csvRows = [];
     csvRows.push(['Task', 'Completed', 'Due Date'].join(','));
     tasks.forEach(task => {
       const row = [
-        `"${task.text.replace(/"/g, '""')}"`, // Escape quotes in task text
+        `"${task.text.replace(/"/g, '""')}"`,
         task.completed ? 'Yes' : 'No',
         task.dueDate
       ].join(',');
@@ -211,17 +207,13 @@ function exportTasks(format) {
     a.click();
     URL.revokeObjectURL(url);
   }
-}
 
-//add exportTasks('sql')
-function exportTasks(format) {
-  if (format === 'sql') {
+  else if (format === 'sql') {
     const sqlRows = [];
     sqlRows.push('CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, completed BOOLEAN, due_date TEXT);');
     tasks.forEach((task, index) => {
       const completed = task.completed ? 1 : 0;
-      const row = `INSERT INTO tasks (id, text, completed, due_date) VALUES
-(${index + 1}, "${task.text.replace(/"/g, '""')}", ${completed}, "${task.dueDate}");`;
+      const row = `INSERT INTO tasks (id, text, completed, due_date) VALUES (${index + 1}, "${task.text.replace(/"/g, '""')}", ${completed}, "${task.dueDate}");`;
       sqlRows.push(row);
     });
     const sqlData = sqlRows.join('\n');
@@ -233,11 +225,8 @@ function exportTasks(format) {
     a.click();
     URL.revokeObjectURL(url);
   }
-}
 
-// add exportTasks('txt')
-function exportTasks(format) {//correct {}
-  if (format === 'txt') {
+  else if (format === 'txt') {
     const txtRows = [];
     tasks.forEach(task => {
       const completed = task.completed ? '✔' : '✘';
@@ -252,43 +241,12 @@ function exportTasks(format) {//correct {}
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  else {
+    console.warn("Unsupported format:", format);
+  }
 }
 
-// add importTasks()
-function importTasks() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.csv';
-  input.onchange = function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const content = e.target.result;
-      const lines = content.split('\n');
-      lines.forEach(line => {
-        const [text, completed, dueDate] = line.split(',');
-        if (text && dueDate) {
-          tasks.push({
-            text: text.replace(/"/g, ''), // Remove quotes
-            completed: completed.trim() === 'Yes',
-            dueDate: dueDate.trim()
-          });
-        }
-      });
-      saveTasks();
-      renderTasks();
-      // Show success toast
-      const toast = document.getElementById('liveToast');
-      const bsToast = new bootstrap.Toast(toast);
-      const toastBody = document.querySelector('.toast-body');
-      toastBody.textContent = 'Tasks imported successfully!';
-      bsToast.show();
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
 
 function saveTasks() {
   localStorage.setItem('tasks', JSON.stringify(tasks));
