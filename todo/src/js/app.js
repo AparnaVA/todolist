@@ -22,6 +22,14 @@ function renderTasks() {
     filteredTasks = tasks.filter(task => task.completed);
   }
 
+  // Filter by search term (search all tasks, not just current page)
+  const searchTerm = document.getElementById('search-input').value.toLowerCase();
+  if (searchTerm) {
+    filteredTasks = filteredTasks.filter(task =>
+      task.text.toLowerCase().includes(searchTerm)
+    );
+  }
+
   const start = (currentPage - 1) * TASKS_PER_PAGE;
   const end = start + TASKS_PER_PAGE;
   const pageTasks = filteredTasks.slice(start, end);

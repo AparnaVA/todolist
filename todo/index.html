@@ -51,13 +51,10 @@
   </div>
   <script>
     function searchTasks() {
-      const searchTerm = document.getElementById('search-input').value.toLowerCase();
-      const todos = document.querySelectorAll('#todo-list li');
-      todos.forEach(todo => {
-        const text = todo.textContent.toLowerCase();
-        todo.style.display = text.includes(searchTerm) ? '' : 'none';
-      });
-    }
+      currentPage=1;
+      renderTasks()
+  
+}
     function handleFileImport(file) {
     if (file) {
       importTasks(file); // This is your existing function
