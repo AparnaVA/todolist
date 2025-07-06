@@ -43,11 +43,12 @@
   </div>
 </div>
 <div class="col-6">
-  
-  <button id="import-btn" class="btn btn-light col-12" onclick="importTasks()">Import CSV</button>
+  <!-- Import Tasks Button and Input -->
+<input type="file" id="fileInput" accept=".json,.csv,.sql,.txt" style="display: none;" onchange="handleFileImport(this.files[0])">
+<button class="btn col-12" id="import-btn" onclick="document.getElementById('fileInput').click()">Import</button>
 </div>
-</div>
-</div>
+  </div>
+  </div>
   <script>
     function searchTasks() {
       const searchTerm = document.getElementById('search-input').value.toLowerCase();
@@ -57,6 +58,13 @@
         todo.style.display = text.includes(searchTerm) ? '' : 'none';
       });
     }
+    function handleFileImport(file) {
+    if (file) {
+      importTasks(file); // This is your existing function
+    } else {
+      alert("No file selected.");
+    }
+  }
   </script>
 </div>
 <ul id="todo-list"></ul>

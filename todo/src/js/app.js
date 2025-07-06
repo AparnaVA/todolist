@@ -384,3 +384,65 @@ document.getElementById('todo-input').addEventListener('keydown', function(e) {
 
 renderTasks();
 
+
+//add importTasks function for  csv,json,sql and text files
+function importTasks(file) {
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const content = event.target.result;
+    let tasksToImport = [];
+    if (file.type === 'application/json') {
+      tasksToImport = JSON.parse(content);
+    } else if (file.type === 'text/csv') {
+      //remove double quotes and heading from the content
+      const cleanedContent = content.replace(/"/g, '');
+      const rows = cleanedContent.split('\n').slice(1); // Remove header
+      tasksToImport = rows.map(row => {
+        const [text, completed, dueDate] = row.split(',');
+        return { text, completed: completed === 'true', dueDate };
+      });
+    }
+    //add functionality to import sql
+    else if (file.type === 'application/sql' || file.name.endsWith('.sql')) {
+  // Find all INSERT INTO statements
+  const insertRegex = /INSERT INTO tasks\s*\(.*?\)\s*VALUES\s*\((.*?)\);/gi;
+  let match;
+  while ((match = insertRegex.exec(content)) !== null) {
+    // Split values by comma, handling quoted strings
+    // Example: 1, "Task text", 1, "2024-07-01"
+    const values = match[1]
+      .split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+      .map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+    // values: [id, text, completed, due_date]
+    if (values.length >= 4) {
+      tasksToImport.push({
+        text: values[1],
+        completed: values[2] === '1' || values[2].toLowerCase() === 'true',
+        dueDate: values[3]
+      });
+    }
+  }
+}
+
+     else if (file.type ==='text/plain') {
+      //do not replace due date
+      const rows = content.split('\n').filter(row => row.trim() !== '')
+      //avoid tick and cross marks
+      .map(row => row.replace(/✔/g, '').replace(/✘/g, '').trim());
+      tasksToImport = rows.map(row => {
+        const parts = row.split(' (Due: ');
+        const text = parts[0].trim();
+        const dueDate = parts[1] ? parts[1].replace(')', '').trim() : '';
+        return { text, completed: row.startsWith('✔'), dueDate };
+      });
+    
+    } else {
+      console.error('Unsupported file type');
+      return;
+    }
+    tasks.push(...tasksToImport);
+    saveTasks();
+    renderTasks();
+  };
+  reader.readAsText(file);
+}
